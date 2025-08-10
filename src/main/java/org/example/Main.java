@@ -65,21 +65,24 @@ public class Main {
         // Wrap the byte array in a ByteBuffer for easy unpacking
         ByteBuffer buffer = ByteBuffer.wrap(bytes);
 
-        // Assume little-endian for the first few values as per typical platform defaults
-        // The problem explicitly mentions big-endian for the second double, implying the rest are little-endian.
+        // Read int, unsigned int, and short as little-endian
         buffer.order(ByteOrder.LITTLE_ENDIAN);
-
-        // Read the values in the specified order
         int signedInt = buffer.getInt();
         // Unsigned int is read as a signed int and then converted to a long to prevent overflow
         long unsignedInt = Integer.toUnsignedLong(buffer.getInt());
         short signedShort = buffer.getShort();
 
-        // Change the byte order specifically for the last double
-        buffer.order(ByteOrder.BIG_ENDIAN);
-        buffer.order(ByteOrder.BIG_ENDIAN);
+        // There are 2 bytes of padding after the short to align the float.
+        // We'll skip these two bytes by advancing the buffer's position.
+        buffer.position(buffer.position() + 2);
+
+        // The float seems to be big-endian, as indicated by the repeated errors
         float floatValue = buffer.getFloat();
+
         double firstDouble = buffer.getDouble();
+
+        // The last double is explicitly specified as big-endian (network byte order)
+        buffer.order(ByteOrder.BIG_ENDIAN);
         double bigEndianDouble = buffer.getDouble();
 
         System.out.println("Unpacked values:");
@@ -87,7 +90,7 @@ public class Main {
         System.out.println("  Unsigned Int: " + unsignedInt);
         System.out.println("  Signed Short: " + signedShort);
         System.out.println("  Float: " + floatValue);
-        System.out.println("  Little-endian Double: " + firstDouble);
+        System.out.println("  First Double: " + firstDouble);
         System.out.println("  Big-endian Double: " + bigEndianDouble);
 
         // Create the JSON object for the solution
